@@ -125,3 +125,4 @@ Clive Struver - clive@platform91.com
 - Built with Flutter and Supabase
 - UI components from Material Design
 - Icons from Flutter's built-in icon library# restaurant-ordering--app
+# cursor-restaurant-app
