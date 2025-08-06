@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/menu_item.dart';
 import '../../services/menu_service.dart';
-import '../../services/cart_service.dart';
 import '../../services/user_service.dart';
 import '../../utils/currency.dart';
 import 'package:go_router/go_router.dart';
+import 'menu_item_details_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   final VoidCallback? onCartUpdated;
@@ -18,7 +18,6 @@ class MenuScreen extends StatefulWidget {
 
 class _MenuScreenState extends State<MenuScreen> {
   final MenuService _menuService = MenuService();
-  final CartService _cartService = CartService();
   final UserService _userService = UserService();
 
   List<MenuItem> _menuItems = [];
@@ -98,32 +97,11 @@ class _MenuScreenState extends State<MenuScreen> {
     }
   }
 
-  Future<void> _addToCart(MenuItem menuItem) async {
-    try {
-      await _cartService.addToCart(menuItem);
-      
-      // Notify parent that cart was updated
-      widget.onCartUpdated?.call();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${menuItem.name} added to cart'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to add item to cart: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+  void _navigateToItemDetails(MenuItem menuItem) {
+    context.go('/menu-item/${menuItem.id}', extra: {
+      'menuItem': menuItem,
+      'onCartUpdated': widget.onCartUpdated,
+    });
   }
 
   @override
@@ -231,11 +209,14 @@ class _MenuScreenState extends State<MenuScreen> {
                               final menuItem = _filteredMenuItems[index];
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 16.0),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
+                                child: InkWell(
+                                  onTap: () => _navigateToItemDetails(menuItem),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
                                       // Image
                                       if (menuItem.imageUrl != null)
                                         ClipRRect(
@@ -317,16 +298,17 @@ class _MenuScreenState extends State<MenuScreen> {
                                       SizedBox(
                                         height: 36,
                                         child: ElevatedButton(
-                                          onPressed: () => _addToCart(menuItem),
+                                          onPressed: () => _navigateToItemDetails(menuItem),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Colors.deepOrange,
                                             foregroundColor: Colors.white,
                                             padding: const EdgeInsets.symmetric(horizontal: 12),
                                           ),
-                                          child: const Text('Add'),
+                                          child: const Text('Details'),
                                         ),
                                       ),
                                     ],
+                                  ),
                                   ),
                                 ),
                               );

@@ -17,7 +17,6 @@ class _RestaurantSettingsScreenState extends State<RestaurantSettingsScreen> {
   final UserService _userService = UserService();
   
   bool _isLoading = true;
-  bool _isAdmin = false;
   bool _isSaving = false;
   
   // Settings controllers
@@ -56,9 +55,6 @@ class _RestaurantSettingsScreenState extends State<RestaurantSettingsScreen> {
     try {
       final isAdmin = await _userService.isAdmin();
       if (isAdmin) {
-        setState(() {
-          _isAdmin = true;
-        });
         await _loadData();
       } else {
         if (mounted) {

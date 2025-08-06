@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/timeslot.dart';
-import '../../utils/currency.dart';
 
 class OrderConfirmationScreen extends StatelessWidget {
   final Map<String, dynamic>? orderData;
   
-  const OrderConfirmationScreen({super.key, this.orderData});
+  const OrderConfirmationScreen({Key? key, this.orderData}) : super(key: key);
 
   String get _orderNumber => orderData?['orderNumber']?.toString() ?? '12345';
   String get _orderType => orderData?['orderType']?.toString() ?? 'Pickup';

@@ -64,9 +64,9 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _updateQuantity(CartItem item, int newQuantity) async {
     try {
       if (newQuantity <= 0) {
-        await _cartService.removeFromCart(item.menuItem.id);
+        await _cartService.removeFromCart(item.id);
       } else {
-        await _cartService.updateQuantity(item.menuItem.id, newQuantity);
+        await _cartService.updateQuantity(item.id, newQuantity);
       }
       await _loadCart(); // Reload cart data
       
@@ -86,7 +86,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<void> _removeItem(CartItem item) async {
     try {
-      await _cartService.removeFromCart(item.menuItem.id);
+      await _cartService.removeFromCart(item.id);
       await _loadCart(); // Reload cart data
       
       // Notify parent that cart was updated
@@ -95,7 +95,7 @@ class _CartScreenState extends State<CartScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${item.menuItem.name} removed from cart'),
+            content: Text('${item.name} removed from cart'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -256,23 +256,16 @@ class _CartScreenState extends State<CartScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Item image
-                      if (item.menuItem.imageUrl != null)
-                        ClipRRect(
+                      // Item image placeholder (since imageUrl is not in CartItem anymore)
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            item.menuItem.imageUrl!,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              width: 60,
-                              height: 60,
-                              color: Colors.grey[300],
-                              child: const Icon(Icons.restaurant),
-                            ),
-                          ),
                         ),
+                        child: const Icon(Icons.restaurant),
+                      ),
                       const SizedBox(width: 12),
                       
                       // Item details
@@ -281,15 +274,31 @@ class _CartScreenState extends State<CartScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              item.menuItem.name,
+                              item.name,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 4),
+                            
+                            // Show selected options if any
+                            if (item.selectedOptions.isNotEmpty) ...[
+                              ...item.selectedOptions.map((option) => Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  '• ${option.optionName}${option.priceAdjustment > 0 ? ' (+${CurrencyUtils.formatPrice(option.priceAdjustment)})' : ''}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              )),
+                              const SizedBox(height: 4),
+                            ],
+                            
                             Text(
-                              '${CurrencyUtils.formatPrice(item.menuItem.price)} each',
+                              '${CurrencyUtils.formatPrice(item.basePrice / item.quantity)} each',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 14,
@@ -376,7 +385,7 @@ class _CartScreenState extends State<CartScreen> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
+                color: Colors.grey.withValues(alpha: 0.2),
                 spreadRadius: 1,
                 blurRadius: 5,
                 offset: const Offset(0, -2),

@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 class MenuItem {
   final String id;
@@ -6,6 +5,7 @@ class MenuItem {
   final String description;
   final double price;
   final String category;
+  final String? categoryId;  // Add categoryId field
   final String? imageUrl;
   final bool isAvailable;
   final List<String> tags;
@@ -17,6 +17,7 @@ class MenuItem {
     required this.description,
     required this.price,
     required this.category,
+    this.categoryId,  // Add categoryId parameter
     this.imageUrl,
     this.isAvailable = true,
     this.tags = const [],
@@ -26,11 +27,17 @@ class MenuItem {
   factory MenuItem.fromJson(Map<String, dynamic> json) {
     // Handle Supabase data structure where category might be nested
     String categoryName = '';
+    String? categoryId;
+    
     if (json['categories'] != null && json['categories'] is Map) {
       categoryName = json['categories']['name'] ?? '';
+      // We don't have category ID from the nested structure
     } else if (json['category'] != null) {
       categoryName = json['category'];
     }
+    
+    // Get the category_id directly from the JSON
+    categoryId = json['category_id'];
 
     return MenuItem(
       id: json['id'] ?? '',
@@ -40,6 +47,7 @@ class MenuItem {
           ? (json['price'] as int).toDouble() 
           : (json['price'] as num).toDouble(),
       category: categoryName,
+      categoryId: categoryId,  // Add categoryId to constructor
       imageUrl: json['image_url'],
       isAvailable: json['is_available'] ?? true,
       tags: json['tags'] != null 
@@ -58,6 +66,7 @@ class MenuItem {
       'description': description,
       'price': price,
       'category': category,
+      'category_id': categoryId,  // Add categoryId to JSON
       'image_url': imageUrl,
       'is_available': isAvailable,
       'tags': tags,

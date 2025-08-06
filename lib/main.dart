@@ -12,12 +12,17 @@ import 'screens/orders/order_tracking_screen.dart';
 import 'screens/admin/admin_panel_screen.dart';
 import 'screens/admin/menu_management_screen.dart';
 import 'screens/admin/menu_item_form_screen.dart';
+import 'screens/admin/menu_options_management_screen.dart';
+import 'screens/admin/option_management_screen.dart';
+import 'screens/admin/category_options_screen.dart';
 import 'screens/admin/order_management_screen.dart';
 import 'screens/admin/order_details_screen.dart';
 import 'screens/admin/admin_check_screen.dart';
 import 'screens/admin/restaurant_settings_screen.dart';
 import 'screens/admin/timeslot_management_screen.dart';
+import 'screens/admin/user_management/user_management_screen.dart';
 import 'screens/auth/diagnostic_screen.dart';
+import 'screens/menu/menu_item_details_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -112,6 +117,21 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => const MenuManagementScreen(),
     ),
     GoRoute(
+      path: '/admin/menu-options',
+      builder: (context, state) => const MenuOptionsManagementScreen(),
+    ),
+    GoRoute(
+      path: '/admin/menu-options/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return OptionManagementScreen(optionGroupId: id);
+      },
+    ),
+    GoRoute(
+      path: '/admin/category-options',
+      builder: (context, state) => const CategoryOptionsScreen(),
+    ),
+    GoRoute(
       path: '/admin/menu/add',
       builder: (context, state) => const MenuItemFormScreen(),
     ),
@@ -148,6 +168,22 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/admin/timeslots',
       builder: (context, state) => const TimeslotManagementScreen(),
+    ),
+    GoRoute(
+      path: '/admin/user-management',
+      builder: (context, state) => const UserManagementScreen(),
+    ),
+    GoRoute(
+      path: '/menu-item/:id',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        final menuItem = extra?['menuItem'];
+        final onCartUpdated = extra?['onCartUpdated'] as VoidCallback?;
+        return MenuItemDetailsScreen(
+          menuItem: menuItem,
+          onCartUpdated: onCartUpdated,
+        );
+      },
     ),
   ],
   errorBuilder: (context, state) => Scaffold(

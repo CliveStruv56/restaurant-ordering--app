@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/user_service.dart';
 import '../../utils/currency.dart';
+import 'user_management/user_form_screen.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -67,14 +68,25 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   Future<void> _loadAdminData() async {
     try {
+      print('[DEBUG AdminPanel] Loading admin data...');
+      
       // Load admin data (orders and users)
-      // Note: This would require additional methods in UserService
-      setState(() {
-        _isAdmin = true;
-        _allOrders = []; // TODO: Implement getAllOrders
-        _allUsers = []; // TODO: Implement getAllUsers
-      });
+      final users = await _userService.getAllUsers();
+      final orders = await _userService.getAllOrders();
+      
+      print('[DEBUG AdminPanel] Loaded ${users.length} users and ${orders.length} orders');
+      print('[DEBUG AdminPanel] Users: ${users.map((u) => u['full_name']).toList()}');
+      
+      if (mounted) {
+        setState(() {
+          _isAdmin = true;
+          _allOrders = orders;
+          _allUsers = users;
+        });
+        print('[DEBUG AdminPanel] State updated with new user data');
+      }
     } catch (e) {
+      print('[ERROR AdminPanel] Failed to load admin data: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -84,6 +96,19 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         );
       }
     }
+  }
+
+  void _showAddUserDialog() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => UserFormScreen(
+          onUserCreated: () {
+            print('[DEBUG AdminPanel] User created callback triggered, reloading data...');
+            _loadAdminData();
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -98,6 +123,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           onPressed: () => context.go('/home'),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              print('[DEBUG AdminPanel] Manual refresh button pressed');
+              _loadAdminData();
+            },
+            tooltip: 'Refresh Data',
+          ),
           IconButton(
             icon: const Icon(Icons.home),
             onPressed: () => context.go('/home'),
@@ -193,7 +226,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   Widget _buildDashboard() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,9 +255,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                           'Total Orders',
                           style: TextStyle(fontSize: 12),
                         ),
-                        const Text(
-                          '0', // TODO: Get actual count
-                          style: TextStyle(
+                        Text(
+                          '${_allOrders.length}',
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -247,9 +280,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                           'Total Users',
                           style: TextStyle(fontSize: 12),
                         ),
-                        const Text(
-                          '0', // TODO: Get actual count
-                          style: TextStyle(
+                        Text(
+                          '${_allUsers.length}',
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -283,6 +316,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           ),
           
           ListTile(
+            leading: const Icon(Icons.tune),
+            title: const Text('Manage Menu Options'),
+            subtitle: const Text('Configure sizes, milk types, sides, etc.'),
+            onTap: () {
+              context.go('/admin/menu-options');
+            },
+          ),
+          
+          ListTile(
             leading: const Icon(Icons.shopping_cart),
             title: const Text('Manage Orders'),
             subtitle: const Text('View and update order status'),
@@ -305,6 +347,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             subtitle: const Text('Configure opening hours and timeslot settings'),
             onTap: () {
               context.go('/admin/restaurant-settings');
+            },
+          ),
+          
+          ListTile(
+            leading: const Icon(Icons.people),
+            title: const Text('User Management'),
+            subtitle: const Text('Manage customer and staff accounts'),
+            onTap: () {
+              context.go('/admin/user-management');
             },
           ),
           
@@ -391,55 +442,199 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'All Users',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'User Management',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      _showAddUserDialog();
+                    },
+                    icon: const Icon(Icons.person_add),
+                    tooltip: 'Add User',
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    context.go('/admin/user-management');
+                  },
+                  icon: const Icon(Icons.settings),
+                  label: const Text('Manage Users'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[700],
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           
-          if (_allUsers.isEmpty)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(32.0),
-                child: Text(
-                  'No users found',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontStyle: FontStyle.italic,
+          // Quick stats
+          Row(
+            children: [
+              Expanded(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        Icon(Icons.people, color: Colors.blue, size: 32),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${_allUsers.length}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Text('Total Users'),
+                      ],
+                    ),
                   ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        Icon(Icons.admin_panel_settings, color: Colors.red, size: 32),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${_allUsers.where((u) => u['role'] == 'admin').length}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Text('Admins'),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          
+          // Recent users preview
+          const Text(
+            'Recent Users',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          if (_allUsers.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.people_outline,
+                      size: 64,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No users found',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Users will appear here once they register',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
                 ),
               ),
             )
           else
             Expanded(
               child: ListView.builder(
-                itemCount: _allUsers.length,
+                itemCount: _allUsers.length > 5 ? 5 : _allUsers.length,
                 itemBuilder: (context, index) {
                   final user = _allUsers[index];
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8.0),
                     child: ListTile(
                       leading: CircleAvatar(
+                        backgroundColor: _getRoleColor(user['role']).withOpacity(0.2),
                         child: Text(
                           (user['full_name'] ?? 'U').substring(0, 1).toUpperCase(),
+                          style: TextStyle(
+                            color: _getRoleColor(user['role']),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       title: Text(user['full_name'] ?? 'Unknown'),
                       subtitle: Text(user['email']),
-                      trailing: Chip(
-                        label: Text(user['role']),
-                        backgroundColor: _getRoleColor(user['role']),
-                        labelStyle: const TextStyle(color: Colors.white),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getRoleColor(user['role']),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          user['role'].toString().toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                       onTap: () {
-                        // TODO: Show user details and role management
+                        context.go('/admin/user-management');
                       },
                     ),
                   );
                 },
+              ),
+            ),
+            
+          // View all button
+          if (_allUsers.length > 5)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () {
+                    context.go('/admin/user-management');
+                  },
+                  child: Text('View All ${_allUsers.length} Users'),
+                ),
               ),
             ),
         ],

@@ -3,7 +3,11 @@
     "allow": [
       "Bash(flutter run:*)",
       "Bash(ls:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(mv:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

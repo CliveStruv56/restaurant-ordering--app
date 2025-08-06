@@ -27,10 +27,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _orderType = 'pickup'; // 'pickup' or 'delivery'
   Timeslot? _selectedTimeslot;
   String _paymentMethod = 'card'; // 'card', 'cash', 'digital_wallet'
-  String _specialInstructions = '';
-  
-  // Available timeslots from backend
-  List<Timeslot> _availableTimeslots = [];
   
   // Day selection
   DateTime? _selectedDate;
@@ -87,7 +83,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }
       
       // Sort all slots for the main list
-      final sortedSlots = uniqueSlots.values.toList()
+      uniqueSlots.values.toList()
         ..sort((a, b) {
           final dateCompare = a.date.compareTo(b.date);
           if (dateCompare != 0) return dateCompare;
@@ -99,7 +95,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _subtotal = subtotalResult;
         _deliveryFee = deliveryFee;
         _total = total;
-        _availableTimeslots = sortedSlots;
+        // Available timeslots loaded
         _timeslotsByDate = groupedSlots;
         
         // Auto-select first available date
@@ -253,7 +249,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           'subtotal': _subtotal,
           'deliveryFee': _deliveryFee,
           'cartItems': _cartItems.map((item) => {
-            'name': item.menuItem.name,
+            'name': item.name,
             'quantity': item.quantity,
             'price': item.totalPrice,
           }).toList(),
@@ -407,7 +403,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      '${item.quantity}x ${item.menuItem.name}',
+                      '${item.quantity}x ${item.name}',
                       style: const TextStyle(fontSize: 14),
                     ),
                   ),
@@ -841,7 +837,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 border: OutlineInputBorder(),
               ),
               maxLines: 3,
-              onChanged: (value) => _specialInstructions = value,
+              onChanged: (value) {
+                // Handle special instructions
+              },
             ),
           ],
         ),

@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../utils/logger.dart';
 
 class UserService {
@@ -218,6 +219,110 @@ class UserService {
       });
     } catch (e) {
       Logger.error('Error creating user profile', e);
+    }
+  }
+
+  // Get all users (admin only)
+  Future<List<Map<String, dynamic>>> getAllUsers() async {
+    try {
+      print('[DEBUG UserService] Checking admin access for getAllUsers...');
+      final isAdminUser = await isAdmin();
+      if (!isAdminUser) {
+        print('[DEBUG UserService] Access denied - not admin');
+        throw Exception('Admin access required');
+      }
+
+      print('[DEBUG UserService] Fetching all users from database...');
+      final response = await _supabase
+          .from('users')
+          .select('id, email, full_name, role, created_at, updated_at')
+          .order('created_at', ascending: false);
+
+      print('[DEBUG UserService] Found ${response.length} users in database');
+      print('[DEBUG UserService] Users by role:');
+      for (final user in response) {
+        print('  - ${user['full_name']} (${user['email']}) - Role: ${user['role']}');
+      }
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('[ERROR UserService] Error fetching all users: $e');
+      Logger.error('Error fetching all users', e);
+      return [];
+    }
+  }
+
+  // Update user role (admin only)
+  Future<void> updateUserRole(String userId, String newRole) async {
+    try {
+      final isAdminUser = await isAdmin();
+      if (!isAdminUser) throw Exception('Admin access required');
+
+      await _supabase
+          .from('users')
+          .update({'role': newRole})
+          .eq('id', userId);
+    } catch (e) {
+      Logger.error('Error updating user role', e);
+      rethrow;
+    }
+  }
+
+  // Delete user (admin only)
+  Future<void> deleteUser(String userId) async {
+    try {
+      final isAdminUser = await isAdmin();
+      if (!isAdminUser) throw Exception('Admin access required');
+
+      // Delete user profile
+      await _supabase
+          .from('users')
+          .delete()
+          .eq('id', userId);
+    } catch (e) {
+      Logger.error('Error deleting user', e);
+      rethrow;
+    }
+  }
+
+  // Create user (admin only) - Simplified demo version
+  Future<String> createUser({
+    required String email,
+    required String fullName,
+    String? phone,
+    required String role,
+  }) async {
+    try {
+      final isAdminUser = await isAdmin();
+      if (!isAdminUser) throw Exception('Admin access required');
+
+      print('[DEBUG UserService] Admin check passed, creating user...');
+
+      // Generate a proper UUID for the user
+      const uuid = Uuid();
+      final userId = uuid.v4();
+      
+      final userData = {
+        'id': userId,
+        'email': email,
+        'full_name': fullName,
+        'phone': phone,
+        'role': role,
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      print('[DEBUG UserService] Creating user with data: $userData');
+      
+      await _supabase
+          .from('users')
+          .insert(userData);
+
+      print('[DEBUG UserService] User created successfully with ID: $userId');
+      return userId;
+    } catch (e) {
+      print('[ERROR UserService] Error creating user: $e');
+      Logger.error('Error creating user', e);
+      rethrow;
     }
   }
 } 

@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Test Supabase connection
@@ -20,7 +21,7 @@ void main() async {
 
     // Test basic connection
     try {
-      final response = await client.from('categories').select('count').limit(1);
+      await client.from('categories').select('count').limit(1);
       print('✅ Database connection successful');
     } catch (e) {
       print('❌ Database connection failed: $e');
@@ -32,7 +33,7 @@ void main() async {
 
     // Test sign up (this will fail if email already exists, but that's expected)
     try {
-      final response = await client.auth.signUp(
+      await client.auth.signUp(
         email: 'test@example.com',
         password: 'testpassword123',
       );

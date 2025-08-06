@@ -51,3 +51,27 @@ app.*.map.json
 .env.development
 *.env
 !.env.example
+
+# Local development files
+.claude/
+*.local
+*.private
+
+# Database backups
+*.sql.backup
+*.db.backup
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Supabase
+.supabase/
+supabase/.temp/
+supabase/.branches/
+
+# Personal notes
+notes/
+*.notes
+TODO.md.personal

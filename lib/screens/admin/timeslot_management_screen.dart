@@ -16,7 +16,6 @@ class _TimeslotManagementScreenState extends State<TimeslotManagementScreen> {
   final UserService _userService = UserService();
   
   bool _isLoading = true;
-  bool _isAdmin = false;
   List<Timeslot> _timeslots = [];
   DateTime _selectedDate = DateTime.now();
   Map<String, dynamic> _stats = {};
@@ -31,9 +30,6 @@ class _TimeslotManagementScreenState extends State<TimeslotManagementScreen> {
     try {
       final isAdmin = await _userService.isAdmin();
       if (isAdmin) {
-        setState(() {
-          _isAdmin = true;
-        });
         await _loadData();
       } else {
         if (mounted) {

@@ -43,7 +43,7 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
       // Test 3: Test database connection
       _addLog('3. Testing database connection...');
       try {
-        final response = await client.from('categories').select('count').limit(1);
+        await client.from('categories').select('count').limit(1);
         _addLog('✅ Database connection successful');
       } catch (e) {
         _addLog('❌ Database connection failed: $e');
